@@ -1,2 +1,2 @@
 # memtool
-PoC tool for analysis of volatile memory
+PoC tool for analysis of volatile memory.
