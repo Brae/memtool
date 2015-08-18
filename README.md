@@ -1,11 +1,13 @@
 # memtool
 PoC tool for analysis of volatile memory.
 
+###See https://gist.github.com/GeneralBrae/d90c8670fca1b2aea931 for detailed notes###
+
 Notes:
 
 * http://www.rekall-forensic.com/
 * Link above includes a signed driver for memory dumping, which is normally integrated into their own Python program.
-* 
+*
 
 /tools/windows/winpmem/executable/main.cpp
 * Only includes ```winpmem.h```
@@ -19,4 +21,4 @@ Notes:
 
 Tasks:
 
-* Look at the website above and work out if the driver can be reused in my own C code for memory access
+[ ] Create custom python script to read and correctly display memory address ranges
