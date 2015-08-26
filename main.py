@@ -14,7 +14,7 @@ def readmem(fd, start, size, verbose=False):
         return data
     elif verbose==True:
         win32file.SetFilePointer(fd, start, 0)
-        data = win32file.ReadFile(fd, size)        
+        data = win32file.ReadFile(fd, size)
         while True:
             output = raw_input("\n\tOutput to file? (y/N)\t->")
             if output == "y" or output == "Y":
@@ -30,7 +30,6 @@ def readmem(fd, start, size, verbose=False):
             elif output == "n" or output == "N":
                 print "\n\t[i] Dumping data to stdout\n\n=============================\n",str(data),"\n=============================\n"
                 break
-        menu(fd)
 
 def searchmem(fd, margins=40):
     #WIP
@@ -74,6 +73,54 @@ def searchmem(fd, margins=40):
     else:
         return
 
+def monitor(fd):
+    print "\n=============================\n=    Monitor for string     =\n"
+    srch = raw_input("\n\tSearch pattern: ")
+    print "\n\tYou will now need to enter the start and end positions for each section of memory to search.\n\tTo finish just leave the start field blank"
+    bounds = []
+    counter = 1
+    while True:
+        print "\n\tSection ", counter, ": "
+        try:
+            tempStart = input("\tStart: ")
+        except SyntaxError:
+            break
+        while True:
+            tempEnd = input("\tEnd: ")
+            if tempEnd:
+                break
+        bounds.append([tempStart, tempEnd])
+        counter+=1
+    #Main loop for scanning memory constantly. Can be stopped by CTRL+C
+
+    print "\n=============================\n"
+    raw_input("Press any key to start scanning. Use CTRL+C at any time to stop the process")
+    print "\n"
+
+    detections = []
+    while True:
+        try:
+            for numB in range(0, len(bounds), 1): #go through each of the bounds parameters
+                for pointer in range(bounds[numB][0], bounds[numB][1], 1024*1024): #step through memory 1MB at a time
+                    seg = readmem(fd, pointer, 1024*1024)
+                    if srch in seg and not "msrch(" in seg:
+                        offset = seg.index(srch)
+                        if not str(seg[offset-20:offset+len(srch)]) in detections:
+                            print "\t",str(pointer+offset),"\t",str(seg[offset-20:offset+len(srch)])
+                            detections.append(str(seg[offset-20:offset+len(srch)]))
+                    if srch.encode("utf-16le") in seg and not "msrch(" in seg:
+                        offset = seg.index(srch.encode("utf-16le"))
+                        if not str(seg[offset-20:offset+(len(srch)*2)]) in detections:
+                            print "\t",str(pointer+offset),"\t",str(seg[offset-20:offset+(len(srch)*2)])
+                            detections.append(str(seg[offset-20:offset+(len(srch)*2)]))
+                    if srch.encode("utf-16be") in seg and not "msrch(" in seg:
+                        offset = seg.index(srch.encode("utf-16be"))
+                        if not str(seg[offset-20:offset+(len(srch)*2)]) in detections:
+                            print "\t",str(pointer+offset), "\t", str(seg[offset-20:offset+(len(srch)*2)])
+                            detections.append(str(seg[offset-20:offset+(len(srch)*2)]))
+        except KeyboardInterrupt:
+            break
+
 def cleanup(fd):
     fd.close()
     print "\n\t[i]Unloading winpmem driver"
@@ -89,7 +136,7 @@ def cleanup(fd):
 
 def menu(fd):
     print "\n=============================\n"
-    print "Menu:\n\t1 - Search memory for string\n\t2 - Read section of memory\n\n\tq - Quit program\n"
+    print "Menu:\n\t1 - Search memory for string\n\t2 - Read section of memory\n\t3 - Monitor memory for pattern\n\n\tq - Quit program\n"
     c = raw_input("\t> ")
     if c == '1':
         print "\n\t[i] Launching 'searchmem()'..."
@@ -100,6 +147,11 @@ def menu(fd):
         readStart = input("\n\n\tEnter start address: ")
         readSize = input("\n\tSize of read: ")
         readmem(fd, readStart, readSize, verbose=True)
+        menu(fd)
+    elif c == '3':
+        print "\n\t[i] Launching 'monitor()'..."
+        monitor(fd)
+        menu(fd)
     elif c == 'q' or c == 'Q':
         cleanup(fd)
     else:
