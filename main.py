@@ -6,9 +6,11 @@ from winpmem import *
 import subprocess
 import sys
 import os
+import datetime
 
 startAddrs = []
 lengths = []
+logfd = None
 
 def readmem(fd, start, size, verbose=False):
     if verbose==False:
@@ -43,6 +45,7 @@ def searchmem(fd, margins=40):
         print ("\t[!] Invalid input. Please retry.")
         searchmem(fd)
 
+    log("\n========================================\nNew search for '" + srch + "' through all address ranges\n")
     index = 0
     for s in startAddrs:
         start = int(s,0)
@@ -70,11 +73,14 @@ def searchmem(fd, margins=40):
                 #results.append(pointer+seg.index(srch.encode("utf-16be")))
         if not results:
             print "\n-----------------------------\n\n\tNo matches found in this address range\n"
+            log("\tNo results in address range\n")
         else:
             print "\n-----------------------------\n\n"
             print "\tNew segment\n\t\tStart addr: %X \tEnd addr: %X \n\n" % (start,end)
+            log("\tNew segment\n\t\tStart addr: " + str(start) + " \tEnd addr: " + str(end) + " \n")
             for i in range(0,len(results)):
                 print "\t",offsets[i],"\t", results[i], "\n"
+                log("\t\t" + offsets[i] + "\t" + results[i] + "\n")
 
     temp = raw_input("\tSearch comlete\n\tNew search? (y/N)    -> ")
     if temp == 'y' or temp == 'Y':
@@ -132,14 +138,17 @@ def monitor(fd):
 
 def cleanup(fd):
     fd.close()
+    log("\n========================================\nclosing program...\n")
     print "\n\t[i]Unloading winpmem driver"
     DEVNULL = open(os.devnull, 'wb')
     chk = subprocess.call(["winpmem_2.0.1.exe", "-u"], stdout=DEVNULL, stderr=subprocess.STDOUT)
     if chk != 0:
         print "\n\t[!] Error occured unloading driver."
+        log("\tFailed to unload driver\n",end=True)
         sys.exit(0)
     else:
         print "\n\t[i] Winpmem driver unloaded successfully\n\t[i] Exiting..."
+        log("\tUnloaded Driver\n",end=True)
         sys.exit(0)
 
 ##
@@ -188,6 +197,12 @@ def loadDriver():
             startAddrs.append(line.strip()[6:16]) # get start address
             lengths.append(line.strip()[26:36])   # get length
 
+def log(msg, end=False):
+    logfd.write(str(msg))
+    if end:
+        logfd.close()
+        print "\t[i] Log closed"
+
 ##
 # Run program
 ##
@@ -196,4 +211,10 @@ loadDriver()
 print startAddrs
 print "[i] Initialising file"
 fd = win32file.CreateFile(r"\\.\pmem",win32file.GENERIC_READ | win32file.GENERIC_WRITE,win32file.FILE_SHARE_READ | win32file.FILE_SHARE_WRITE,None,win32file.OPEN_EXISTING,win32file.FILE_ATTRIBUTE_NORMAL,None)
+print "[i] Loading log"
+t = datetime.datetime.now()
+newt = t.strftime("%d-%m-%Y_%H%M%S")
+fname = "logs/" + newt + ".log"
+logfd = open(fname, "wb")
+log("========================================\n========  Start of session log  ========\n========================================\n")
 menu(fd)
