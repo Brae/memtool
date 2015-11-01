@@ -117,3 +117,9 @@ win32file.FILE_SHARE_WRITE,None,win32file.OPEN_EXISTING,win32file.FILE_ATTRIBUTE
 * Start 0x00200000 - Length 0x00002000
 * Start 0x00103000 - Length 0xB753C000
 * Start 0xB77FF000 - Length 0x00001000
+
+==
+
+##Registry info##
+
+Good whitepaper from 2008 - http://www.dfrws.org/2008/proceedings/p26-dolan-gavitt.pdf
